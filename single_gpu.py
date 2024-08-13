@@ -1,7 +1,8 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 from utils import MyTrainDataset
-
+import sys
+import time
 
 class Trainer:
     def __init__(
@@ -39,20 +40,27 @@ class Trainer:
         print(f"Epoch {epoch} | Training checkpoint saved at checkpoint.pt")
 
     def train(self, max_epochs: int):
+        print(f"[GPU{self.gpu_id}] Training for {max_epochs} epochs")
+        start_time = time.time()
         for epoch in range(max_epochs):
             self._run_epoch(epoch)
             if epoch % self.save_every == 0:
                 self._save_checkpoint(epoch)
+        print(f"[GPU{self.gpu_id}] Training completed in {time.time() - start_time:.2f} seconds")
 
 
 def load_train_objs():
+    print("Loading training objects...")
+    start_time = time.time()
     train_set = MyTrainDataset(2048)  # load your dataset
     model = torch.nn.Linear(20, 1)  # load your model
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+    print(f"Loaded training objects in {time.time() - start_time:.2f} seconds")
     return train_set, model, optimizer
 
 
 def prepare_dataloader(dataset: Dataset, batch_size: int):
+    print("Preparing DataLoader...")
     return DataLoader(
         dataset,
         batch_size=batch_size,
@@ -69,8 +77,9 @@ def main(device, total_epochs, save_every):
 
 
 if __name__ == "__main__":
-    import sys
     total_epochs = int(sys.argv[1])
     save_every = int(sys.argv[2])
     device = 0  # shorthand for cuda:0
+    start_time = time.time()
     main(device, total_epochs, save_every)
+    print(f"{__name__} took {time.time() - start_time:.2f} seconds")

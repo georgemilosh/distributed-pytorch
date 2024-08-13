@@ -7,7 +7,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 import os
-
+import time
 
 def ddp_setup():
     init_process_group(backend="nccl")
@@ -63,16 +63,22 @@ class Trainer:
         print(f"Epoch {epoch} | Training snapshot saved at snapshot.pt")
 
     def train(self, max_epochs: int):
+        print(f"[GPU{self.gpu_id}] Training for {max_epochs} epochs")
+        start_time = time.time()
         for epoch in range(self.epochs_run, max_epochs):
             self._run_epoch(epoch)
             if self.local_rank == 0 and epoch % self.save_every == 0:
                 self._save_snapshot(epoch)
+        print(f"[GPU{self.gpu_id}] Training completed in {time.time() - start_time:.2f} seconds")
 
 
 def load_train_objs():
+    print("Loading training objects...")
+    start_time = time.time()
     train_set = MyTrainDataset(2048)  # load your dataset
     model = torch.nn.Linear(20, 1)  # load your model
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+    print(f"Loaded training objects in {time.time() - start_time:.2f} seconds")
     return train_set, model, optimizer
 
 
@@ -88,10 +94,12 @@ def prepare_dataloader(dataset: Dataset, batch_size: int):
 
 def main(save_every: int, total_epochs: int, snapshot_path: str = "snapshot.pt"):
     ddp_setup()
+    start_time = time.time()
     dataset, model, optimizer = load_train_objs()
     train_data = prepare_dataloader(dataset, batch_size=32)
     trainer = Trainer(model, train_data, optimizer, save_every, snapshot_path)
     trainer.train(total_epochs)
+    print(f"{__name__} took {time.time() - start_time:.2f} seconds")
     destroy_process_group()
 
 
