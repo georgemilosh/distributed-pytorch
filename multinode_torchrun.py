@@ -49,7 +49,7 @@ class Trainer:
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_data))[0])
-        print(f"[GPU{self.global_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
+        print(f"[Local {self.local_rank}], [Global {self.global_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         for source, targets in self.train_data:
             source = source.to(self.local_rank)
             targets = targets.to(self.local_rank)
@@ -63,13 +63,13 @@ class Trainer:
         print(f"Epoch {epoch} | Training snapshot saved at snapshot.pt")
 
     def train(self, max_epochs: int):
-        print(f"[GPU{self.gpu_id}] Training for {max_epochs} epochs")
+        print(f"[Local {self.local_rank}], [Global {self.global_rank}] Training for {max_epochs} epochs")
         start_time = time.time()
         for epoch in range(self.epochs_run, max_epochs):
             self._run_epoch(epoch)
             if self.local_rank == 0 and epoch % self.save_every == 0:
                 self._save_snapshot(epoch)
-        print(f"[GPU{self.gpu_id}] Training completed in {time.time() - start_time:.2f} seconds")
+        print(f"[Local {self.local_rank}], [Global {self.global_rank}] Training completed in {time.time() - start_time:.2f} seconds")
 
 
 def load_train_objs():

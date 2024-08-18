@@ -1,11 +1,11 @@
 #!/bin/bash -l
 
 #PBS -A starting_2023_110
-#PBS -N single_gpu
+#PBS -N multigpu_torchrun
 #PBS -m abe
 ### Regular queue
-#PBS -l walltime=0:20:00
-#PBS -l nodes=1:gpus=1
+#PBS -l walltime=0:05:00
+#PBS -l nodes=1:gpus=4
 #PBS -o \$PBS_JOBNAME\$PBS_JOBID.out
 #PBS -e \$PBS_JOBNAME\$PBS_JOBID.err
 
@@ -13,4 +13,5 @@
 cd $PBS_O_WORKDIR
 
 module load PyTorch/2.1.2-foss-2023a-CUDA-12.1.1
-python ../single_gpu.py 50 10
+##mamba activate torch
+torchrun --standalone --nproc_per_node=gpu ../multigpu_torchrun.py 50 10
